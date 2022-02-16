@@ -95,29 +95,26 @@ namespace DOCXTemplate
                     if (templateFilePaths.Count == 0)
                     {
                         MessageBox.Show("No templates in templates folder", "Warning", MessageBoxButtons.OK);
-                        System.Diagnostics.Process.Start(templateDirectoryPath);
+                        Process.Start(templateDirectoryPath);
                     }
                 }));
             }
         }
-
         private void clbTemplates_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            this.BeginInvoke((MethodInvoker)(() =>
+            this.BeginInvoke(new MethodInvoker(delegate
             {
-                _ = refreshVariablesForAllTemplatesTask(false);
+                var displayLoadingDialog = !dialog.Visible;
+                _ = refreshVariablesForAllTemplatesTask(displayLoadingDialog);
             }));
         }
-        
         private void btnToggleSelect_Click(object sender, EventArgs e)
         {
             for (int i = 0; i < clbTemplates.Items.Count; i++) {
                 var newChecked = !(clbTemplates.GetItemCheckState(i) == CheckState.Checked);
                 clbTemplates.SetItemChecked(i, newChecked);
             }
-            _ = refreshVariablesForAllTemplatesTask(true);
         }
-
 
         private async Task refreshVariablesForAllTemplatesTask(bool showHideLoadingDialog)
         {
@@ -130,7 +127,7 @@ namespace DOCXTemplate
                     }));
                 }
 
-                refreshVariablesForAllTemplates();
+                refreshVariablesForTemplate();
 
                 Thread.Sleep(500);
 
@@ -144,17 +141,22 @@ namespace DOCXTemplate
             });
         }
 
-        private void refreshVariablesForAllTemplates() { 
+        private void refreshVariablesForTemplate() {
+
             var varsToKeep = new List<TemplateVariable>();
             var varsToRemove = new List<TemplateVariable>();
 
-            foreach (string fileName in clbTemplates.Items) {
+            foreach (string fileName in templateFilePaths)
+            {
+                var indexFile = clbTemplates.CheckedItems.IndexOf(fileName);
+                bool isChecked = indexFile != -1;
 
-                if (fixTemplate(fileName)) {
+                if (fixTemplate(fileName))
+                {
                     String message = String.Format("Template {0} had broken styles in variable. It was fixed. The backup file save to {0}.bak", fileName);
                     if (this.InvokeRequired)
                     {
-                        this.Invoke(new MethodInvoker(delegate
+                        this.BeginInvoke(new MethodInvoker(delegate
                         {
                             MessageBox.Show(message, "Warning", MessageBoxButtons.OK);
                         }));
@@ -167,27 +169,26 @@ namespace DOCXTemplate
 
                 var vars = getTemplateVariables(fileName);
 
-                bool isChecked = clbTemplates.CheckedItems.IndexOf(fileName) != -1;
-
                 if (isChecked)
                 {
                     varsToKeep.AddRange(vars);
                     varsToKeep = varsToKeep.Distinct().ToList();
                 }
-                else {
+                else
+                {
                     varsToRemove.AddRange(vars);
                     varsToRemove = varsToRemove.Distinct().ToList();
                 }
             }
-
             if (dgvVariables.InvokeRequired)
             {
-                dgvVariables.Invoke(new MethodInvoker(delegate
+                dgvVariables.BeginInvoke(new MethodInvoker(delegate
                 {
                     updateVariableGridView(varsToKeep, varsToRemove);
                 }));
             }
-            else {
+            else
+            {
                 updateVariableGridView(varsToKeep, varsToRemove);
             }
         }
@@ -283,7 +284,7 @@ namespace DOCXTemplate
 
                 foreach (Match match in matches) {
                     var name = match.Groups["name"].Value;
-                    var variable = new TemplateVariable(name, "");
+                    var variable = new TemplateVariable(name, "", TemplateVariableType.Text);
                     result.Add(variable);
                 }
             }
@@ -359,15 +360,23 @@ namespace DOCXTemplate
         }
     }
 
+    public enum TemplateVariableType
+    {
+        Text,
+        SubTemplate
+    }
+
     public class TemplateVariable : IEquatable<TemplateVariable>, IComparable<TemplateVariable>
     {
         public String Name { get; set; }
         public String Value { get; set; }
+        public TemplateVariableType Type { get; set; }
 
-        public TemplateVariable(string nameArg, string valueArg)
+        public TemplateVariable(string nameArg, string valueArg, TemplateVariableType typeArg)
         {
             Name = nameArg;
             Value = valueArg;
+            Type = typeArg;
         }
 
         public bool Equals(TemplateVariable other)
