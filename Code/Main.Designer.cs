@@ -37,6 +37,8 @@
             this.ColumnValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.templateVariableBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.btnGenerate = new System.Windows.Forms.Button();
+            this.btnTemplates = new System.Windows.Forms.Button();
+            this.btnOutput = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvVariables)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.templateVariableBindingSource)).BeginInit();
             this.SuspendLayout();
@@ -60,7 +62,6 @@
             this.clbTemplates.Name = "clbTemplates";
             this.clbTemplates.Size = new System.Drawing.Size(300, 394);
             this.clbTemplates.TabIndex = 2;
-            this.clbTemplates.ItemCheck += clbTemplates_ItemCheck;
             // 
             // btnToggleSelect
             // 
@@ -113,17 +114,39 @@
             // 
             this.btnGenerate.Location = new System.Drawing.Point(319, 13);
             this.btnGenerate.Name = "btnGenerate";
-            this.btnGenerate.Size = new System.Drawing.Size(159, 23);
+            this.btnGenerate.Size = new System.Drawing.Size(101, 23);
             this.btnGenerate.TabIndex = 5;
             this.btnGenerate.Text = "Generate";
             this.btnGenerate.UseVisualStyleBackColor = true;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
+            // 
+            // btnTemplates
+            // 
+            this.btnTemplates.Location = new System.Drawing.Point(426, 13);
+            this.btnTemplates.Name = "btnTemplates";
+            this.btnTemplates.Size = new System.Drawing.Size(100, 23);
+            this.btnTemplates.TabIndex = 6;
+            this.btnTemplates.Text = "Templates";
+            this.btnTemplates.UseVisualStyleBackColor = true;
+            this.btnTemplates.Click += new System.EventHandler(this.btnTemplates_Click);
+            // 
+            // btnOutput
+            // 
+            this.btnOutput.Location = new System.Drawing.Point(532, 13);
+            this.btnOutput.Name = "btnOutput";
+            this.btnOutput.Size = new System.Drawing.Size(109, 23);
+            this.btnOutput.TabIndex = 7;
+            this.btnOutput.Text = "Output";
+            this.btnOutput.UseVisualStyleBackColor = true;
+            this.btnOutput.Click += new System.EventHandler(this.btnOutput_Click);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(777, 450);
+            this.Controls.Add(this.btnOutput);
+            this.Controls.Add(this.btnTemplates);
             this.Controls.Add(this.btnGenerate);
             this.Controls.Add(this.dgvVariables);
             this.Controls.Add(this.btnToggleSelect);
@@ -148,6 +171,8 @@
         private System.Windows.Forms.Button btnGenerate;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnName;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnValue;
+        private System.Windows.Forms.Button btnTemplates;
+        private System.Windows.Forms.Button btnOutput;
     }
 }
 

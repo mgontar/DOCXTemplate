@@ -9,6 +9,7 @@ using DocumentFormat.OpenXml.Packaging;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics;
 
 namespace DOCXTemplate
 {
@@ -337,7 +338,7 @@ namespace DOCXTemplate
                 this.BeginInvoke(new MethodInvoker(delegate
                 {
                     dialog.Hide();
-                    System.Diagnostics.Process.Start(outputDirectoryPath);
+                    Process.Start(outputDirectoryPath);
                 }));
             });
         }
@@ -345,6 +346,16 @@ namespace DOCXTemplate
         private void btnGenerate_Click(object sender, EventArgs e)
         {
             _ = generateDocumentFromTemplateCheckedTask();
+        }
+
+        private void btnTemplates_Click(object sender, EventArgs e)
+        {
+           Process.Start(templateDirectoryPath);
+        }
+
+        private void btnOutput_Click(object sender, EventArgs e)
+        {
+            Process.Start(outputDirectoryPath);
         }
     }
 
