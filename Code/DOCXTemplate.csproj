@@ -87,6 +87,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LoadingDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LoadingDialog.Designer.cs">
+      <DependentUpon>LoadingDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,6 +101,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="LoadingDialog.resx">
+      <DependentUpon>LoadingDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -149,5 +158,5 @@
   <Target Name="ILMerge">
     <!-- the ILMergePath property points to the location of ILMerge.exe console application -->
     <Exec Command="$(ILMergeConsolePath) bin\Release\DOCXTemplate.exe  /out:../Builds/DOCXTemplate.exe bin\Release\DocumentFormat.OpenXml.dll" />
-  </Target> 
+  </Target>
 </Project>

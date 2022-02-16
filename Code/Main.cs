@@ -7,58 +7,140 @@ using System.Windows.Forms;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace DOCXTemplate
 {
     public partial class Main : Form
     {
 
-        BindingList<TemplateVariable> templateVariableNames;
-        String templateDirectoryPath;
-        String outputDirectoryPath;
+        BindingList<TemplateVariable> templateVariableNames = new BindingList<TemplateVariable>();
+        BindingList<String> templateFilePaths = new BindingList<String>();
+        String templateDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\templates";
+        String outputDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\output";
+
+        LoadingDialog dialog = new LoadingDialog();
 
         public Main()
         {
             InitializeComponent();
-
-            templateDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\templates";
 
             if (!Directory.Exists(templateDirectoryPath))
             {
                 Directory.CreateDirectory(templateDirectoryPath);
             }
 
-            outputDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\output";
             if (!Directory.Exists(outputDirectoryPath))
             {
                 Directory.CreateDirectory(outputDirectoryPath);
             }
 
-            this.Load += new EventHandler(Main_Load);
+            this.Shown += Main_Shown;
         }
 
-        private void Main_Load(System.Object sender, System.EventArgs e)
+        private void Main_Shown(object sender, EventArgs e)
         {
-            scanTemplates();
+            _ = scanTemplatesTask();
         }
 
         private void btnScanTemplates_Click(object sender, EventArgs e)
         {
-            scanTemplates();
+            _ = scanTemplatesTask();
         }
 
-        private void clbTemplates_SelectedIndexChanged(object sender, EventArgs e)
+        private async Task scanTemplatesTask()
         {
-            refreshVariablesForAllTemplates();
+            await Task.Run(() => {
+                this.BeginInvoke(new MethodInvoker(delegate {
+                    dialog.Show(this);
+                }));
+
+                scanTemplates();
+
+                Thread.Sleep(500);
+
+                this.BeginInvoke(new MethodInvoker(delegate {
+                    dialog.Hide();
+                }));
+            });
+        }
+        private void scanTemplates()
+        {
+            templateFilePaths.Clear();
+            var dirInfo = new DirectoryInfo(templateDirectoryPath);
+            foreach (var file in dirInfo.GetFiles())
+            {
+                if (file.Extension.ToLower().Equals(".docx"))
+                {
+                    templateFilePaths.Add(file.Name);
+                }
+            }
+
+            if (clbTemplates.InvokeRequired)
+            {
+                clbTemplates.Invoke(new MethodInvoker(delegate {
+                    clbTemplates.DataSource = templateFilePaths;
+                    for (int i = 0; i < clbTemplates.Items.Count; i++)
+                    {
+                        clbTemplates.SetItemChecked(i, true);
+                    }
+                }));
+            }
+
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new MethodInvoker(delegate {
+                    if (templateFilePaths.Count == 0)
+                    {
+                        MessageBox.Show("No templates in templates folder", "Warning", MessageBoxButtons.OK);
+                        System.Diagnostics.Process.Start(templateDirectoryPath);
+                    }
+                }));
+            }
         }
 
+        private void clbTemplates_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            this.BeginInvoke((MethodInvoker)(() =>
+            {
+                _ = refreshVariablesForAllTemplatesTask(false);
+            }));
+        }
+        
         private void btnToggleSelect_Click(object sender, EventArgs e)
         {
             for (int i = 0; i < clbTemplates.Items.Count; i++) {
                 var newChecked = !(clbTemplates.GetItemCheckState(i) == CheckState.Checked);
                 clbTemplates.SetItemChecked(i, newChecked);
             }
-            refreshVariablesForAllTemplates();
+            _ = refreshVariablesForAllTemplatesTask(true);
+        }
+
+
+        private async Task refreshVariablesForAllTemplatesTask(bool showHideLoadingDialog)
+        {
+            await Task.Run(() => {
+                if (showHideLoadingDialog)
+                {
+                    this.BeginInvoke(new MethodInvoker(delegate
+                    {
+                        dialog.Show(this);
+                    }));
+                }
+
+                refreshVariablesForAllTemplates();
+
+                Thread.Sleep(500);
+
+                if (showHideLoadingDialog)
+                {
+                    this.BeginInvoke(new MethodInvoker(delegate
+                    {
+                        dialog.Hide();
+                    }));
+                }
+            });
         }
 
         private void refreshVariablesForAllTemplates() { 
@@ -66,6 +148,21 @@ namespace DOCXTemplate
             var varsToRemove = new List<TemplateVariable>();
 
             foreach (string fileName in clbTemplates.Items) {
+
+                if (fixTemplate(fileName)) {
+                    String message = String.Format("Template {0} had broken styles in variable. It was fixed. The backup file save to {0}.bak", fileName);
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new MethodInvoker(delegate
+                        {
+                            MessageBox.Show(message, "Warning", MessageBoxButtons.OK);
+                        }));
+                    }
+                    else
+                    {
+                        MessageBox.Show(message, "Warning", MessageBoxButtons.OK);
+                    }
+                }
 
                 var vars = getTemplateVariables(fileName);
 
@@ -82,51 +179,96 @@ namespace DOCXTemplate
                 }
             }
 
-            foreach (TemplateVariable varToRemove in varsToRemove) {
-                if (!varsToKeep.Contains(varToRemove)) {
+            if (dgvVariables.InvokeRequired)
+            {
+                dgvVariables.Invoke(new MethodInvoker(delegate
+                {
+                    updateVariableGridView(varsToKeep, varsToRemove);
+                }));
+            }
+            else {
+                updateVariableGridView(varsToKeep, varsToRemove);
+            }
+        }
+
+        private void updateVariableGridView(List<TemplateVariable> varsToKeep, List<TemplateVariable> varsToRemove)
+        {
+            foreach (TemplateVariable varToRemove in varsToRemove)
+            {
+                if (!varsToKeep.Contains(varToRemove))
+                {
                     templateVariableNames.Remove(varToRemove);
                 }
             }
 
-            foreach (TemplateVariable varToKeep in varsToKeep) {
-                if (!templateVariableNames.Contains(varToKeep)) {
+            foreach (TemplateVariable varToKeep in varsToKeep)
+            {
+                if (!templateVariableNames.Contains(varToKeep))
+                {
                     templateVariableNames.Add(varToKeep);
                 }
             }
+
+            templateVariableNames = new BindingList<TemplateVariable> (templateVariableNames.OrderBy(v => v.Name).ToList());
+            dgvVariables.DataSource = templateVariableNames;
         }
 
-        private void scanTemplates() {
-            templateVariableNames = new BindingList<TemplateVariable>();
-
-            var templateFilePaths = new BindingList<String>();
-            var dirInfo = new DirectoryInfo(templateDirectoryPath);
-            foreach (var file in dirInfo.GetFiles())
+        private bool fixTemplate(string fileName) {
+            var result = false;
+            var templatePath = templateDirectoryPath + @"\" + fileName;
+            List<string> tagsToReplace = new List<string>();
+            using (var mainDoc = WordprocessingDocument.Open(templatePath, false))
             {
-                if (file.Extension.ToLower().Equals(".docx"))
+                string docText = null;
+                using (StreamReader sr = new StreamReader(mainDoc.MainDocumentPart.GetStream()))
                 {
-                    templateFilePaths.Add(file.Name);
+                    docText = sr.ReadToEnd();
+                }
+
+                var regexVariable = new Regex(@"{(?<capture>(?:\<.*?\>)?\$(?:\<.*?\>)?.*?(?:\<.*?\>)?\$(?:\<.*?\>)?)}");
+                var matches = regexVariable.Matches(docText);
+
+                foreach (Match match in matches)
+                {
+                    String capture = match.ToString();
+                    var variableTag = Regex.Replace(capture, @"\<.*?\>", "");
+                    if (!capture.Equals(variableTag))
+                    {
+                        tagsToReplace.Add(capture);
+                    }
                 }
             }
 
-            clbTemplates.DataSource = templateFilePaths;
+            result = tagsToReplace.Count > 0;
 
-            dgvVariables.DataSource = templateVariableNames;
-
-            if (templateFilePaths.Count == 0) {
-                MessageBox.Show("No templates in templates folder", "Warning", MessageBoxButtons.OK);
-                System.Diagnostics.Process.Start(templateDirectoryPath);
-            }
-
-            for (int i = 0; i < clbTemplates.Items.Count; i++)
+            if (result)
             {
-                clbTemplates.SetItemChecked(i, true);
+                File.Copy(templatePath, templatePath + ".bak", true);
+                using (var mainDoc = WordprocessingDocument.Open(templatePath, true))
+                {
+                    string docText = null;
+                    using (StreamReader sr = new StreamReader(mainDoc.MainDocumentPart.GetStream()))
+                    {
+                        docText = sr.ReadToEnd();
+                    }
+
+                    foreach (String tagToReplace in tagsToReplace)
+                    {
+                        var variableTag = Regex.Replace(tagToReplace, @"\<.*?\>", "");
+                        docText = docText.Replace(tagToReplace, variableTag);
+                    }
+
+                    using (StreamWriter sw = new StreamWriter(mainDoc.MainDocumentPart.GetStream(FileMode.Create)))
+                    {
+                        sw.Write(docText);
+                    }
+                }
             }
-            refreshVariablesForAllTemplates();
+            return result;
         }
 
         private List<TemplateVariable> getTemplateVariables(string fileName) { 
             var result = new List<TemplateVariable>();
-
             using (var mainDoc = WordprocessingDocument.Open(templateDirectoryPath + @"\" + fileName, false))
             {
                 string docText = null;
@@ -172,35 +314,37 @@ namespace DOCXTemplate
             }
         }
 
-        private void btnGenerate_Click(object sender, EventArgs e)
+        private async Task generateDocumentFromTemplateCheckedTask()
         {
-            foreach (DataGridViewRow row in dgvVariables.Rows)
-            {
-                foreach (DataGridViewCell cell in row.Cells)
+            await Task.Run(() => {
+
+                this.BeginInvoke(new MethodInvoker(delegate
                 {
-                    if (dgvVariables.Columns[cell.ColumnIndex].HeaderText != "Name") {
-                        if (string.IsNullOrEmpty(cell.FormattedValue.ToString()))
-                        {
-                            MessageBox.Show("Variable value must not be empty");
-                            dgvVariables.Rows[cell.RowIndex].ErrorText = "Variable value must not be empty";
-                            dgvVariables.CurrentCell = cell;
-                            dgvVariables.BeginEdit(true);
-                            return;
-                        }
+                    dialog.Show(this);
+                }));
+
+                foreach (string fileName in clbTemplates.Items)
+                {
+                    bool isChecked = clbTemplates.CheckedItems.IndexOf(fileName) != -1;
+                    if (isChecked)
+                    {
+                        generateDocumentFromTemplate(fileName);
                     }
                 }
-            }
 
-            foreach (string fileName in clbTemplates.Items)
-            {
-                bool isChecked = clbTemplates.CheckedItems.IndexOf(fileName) != -1;
-                if (isChecked)
+                Thread.Sleep(500);
+
+                this.BeginInvoke(new MethodInvoker(delegate
                 {
-                    generateDocumentFromTemplate(fileName);
-                }
-            }
+                    dialog.Hide();
+                    System.Diagnostics.Process.Start(outputDirectoryPath);
+                }));
+            });
+        }
 
-            System.Diagnostics.Process.Start(outputDirectoryPath);
+        private void btnGenerate_Click(object sender, EventArgs e)
+        {
+            _ = generateDocumentFromTemplateCheckedTask();
         }
     }
 
