@@ -19,6 +19,7 @@ namespace DOCXTemplate
         BindingList<TemplateVariable> templateVariableNames = new BindingList<TemplateVariable>();
         BindingList<String> templateFilePaths = new BindingList<String>();
         String templateDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\templates";
+        String templateSubDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\templates\sub";
         String outputDirectoryPath = AppDomain.CurrentDomain.BaseDirectory + @"\output";
 
         LoadingDialog dialog = new LoadingDialog();
@@ -30,6 +31,11 @@ namespace DOCXTemplate
             if (!Directory.Exists(templateDirectoryPath))
             {
                 Directory.CreateDirectory(templateDirectoryPath);
+            }
+
+            if (!Directory.Exists(templateSubDirectoryPath))
+            {
+                Directory.CreateDirectory(templateSubDirectoryPath);
             }
 
             if (!Directory.Exists(outputDirectoryPath))
@@ -306,7 +312,10 @@ namespace DOCXTemplate
                 }
 
                 foreach (var variable in templateVariableNames) {
-                    docText = docText.Replace(String.Format("{{${0}$}}", variable.Name), variable.Value);
+                    if (variable.Value.Trim().Length != 0)
+                    {
+                        docText = docText.Replace(String.Format("{{${0}$}}", variable.Name), variable.Value);
+                    }
                 }
 
                 using (StreamWriter sw = new StreamWriter(resultDoc.MainDocumentPart.GetStream(FileMode.Create)))
