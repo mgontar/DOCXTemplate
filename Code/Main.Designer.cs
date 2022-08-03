@@ -35,13 +35,13 @@ namespace DOCXTemplate
             this.clbTemplates = new System.Windows.Forms.CheckedListBox();
             this.btnToggleSelect = new System.Windows.Forms.Button();
             this.dgvVariables = new System.Windows.Forms.DataGridView();
-            this.btnGenerate = new System.Windows.Forms.Button();
-            this.btnTemplates = new System.Windows.Forms.Button();
-            this.btnOutput = new System.Windows.Forms.Button();
-            this.templateVariableBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.ColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ColumnValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.templateVariableBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.btnGenerate = new System.Windows.Forms.Button();
+            this.btnTemplates = new System.Windows.Forms.Button();
+            this.btnOutput = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvVariables)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.templateVariableBindingSource)).BeginInit();
             this.SuspendLayout();
@@ -65,7 +65,7 @@ namespace DOCXTemplate
             this.clbTemplates.Name = "clbTemplates";
             this.clbTemplates.Size = new System.Drawing.Size(300, 394);
             this.clbTemplates.TabIndex = 2;
-            this.clbTemplates.ItemCheck += clbTemplates_ItemCheck;
+            this.clbTemplates.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbTemplates_ItemCheck);
             // 
             // btnToggleSelect
             // 
@@ -95,6 +95,36 @@ namespace DOCXTemplate
             this.dgvVariables.Name = "dgvVariables";
             this.dgvVariables.Size = new System.Drawing.Size(458, 394);
             this.dgvVariables.TabIndex = 4;
+            this.dgvVariables.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dgvVariables_EditingControlShowing);
+            // 
+            // ColumnName
+            // 
+            this.ColumnName.DataPropertyName = "Name";
+            this.ColumnName.HeaderText = "Name";
+            this.ColumnName.Name = "ColumnName";
+            this.ColumnName.ReadOnly = true;
+            this.ColumnName.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            // 
+            // ColumnType
+            // 
+            this.ColumnType.DataPropertyName = "Type";
+            this.ColumnType.HeaderText = "Type";
+            this.ColumnType.Items.AddRange(new object[] {
+            DOCXTemplate.TemplateVariableType.Text,
+            DOCXTemplate.TemplateVariableType.SubTemplate});
+            this.ColumnType.Name = "ColumnType";
+            this.ColumnType.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            // 
+            // ColumnValue
+            // 
+            this.ColumnValue.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ColumnValue.DataPropertyName = "Value";
+            this.ColumnValue.HeaderText = "Value";
+            this.ColumnValue.Name = "ColumnValue";
+            // 
+            // templateVariableBindingSource
+            // 
+            this.templateVariableBindingSource.DataSource = typeof(DOCXTemplate.TemplateVariable);
             // 
             // btnGenerate
             // 
@@ -125,33 +155,6 @@ namespace DOCXTemplate
             this.btnOutput.Text = "Output";
             this.btnOutput.UseVisualStyleBackColor = true;
             this.btnOutput.Click += new System.EventHandler(this.btnOutput_Click);
-            // 
-            // templateVariableBindingSource
-            // 
-            this.templateVariableBindingSource.DataSource = typeof(DOCXTemplate.TemplateVariable);
-            // 
-            // ColumnName
-            // 
-            this.ColumnName.DataPropertyName = "Name";
-            this.ColumnName.HeaderText = "Name";
-            this.ColumnName.Name = "ColumnName";
-            this.ColumnName.ReadOnly = true;
-            this.ColumnName.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            // 
-            // Type
-            // 
-            this.ColumnType.DataPropertyName = "Type";
-            this.ColumnType.HeaderText = "Type";
-            this.ColumnType.Name = "ColumnType";
-            this.ColumnType.DataSource = Enum.GetValues(typeof(TemplateVariableType));
-            this.ColumnType.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            // 
-            // ColumnValue
-            // 
-            this.ColumnValue.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ColumnValue.DataPropertyName = "Value";
-            this.ColumnValue.HeaderText = "Value";
-            this.ColumnValue.Name = "ColumnValue";
             // 
             // Main
             // 
